@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # توکن ادمین عمداً کوتاه‌عمرتر است
     customer_token_minutes: int = 60 * 24
     admin_token_minutes: int = 15
+    # حداکثر تعداد هش رمز همزمان (هر هش ~۱۹MB حافظه)
+    password_hash_concurrency: int = 4
 
     # آپلودها: covers/ عمومی (از /media/covers سرو می‌شود)، digital/ هرگز عمومی نیست
     upload_dir: str = "/data/uploads"

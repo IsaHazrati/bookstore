@@ -109,3 +109,37 @@ def test_admin_token_lives_shorter_than_customer_token(client, make_user):
     adm = login(client, "adm@example.com").json()["expires_in"]
     assert adm == get_settings().admin_token_minutes * 60
     assert adm < cust
+
+
+def test_old_argon2_hash_still_works_and_is_upgraded(client, db_session):
+    from pwdlib import PasswordHash
+
+    from app.models.user import User
+
+    old = PasswordHash.recommended().hash("password123")  # پارامترهای قدیمی (m=65536)
+    u = User(email="old@example.com", password_hash=old, role=Role.customer)
+    db_session.add(u)
+    db_session.commit()
+    assert login(client, "old@example.com").status_code == 200
+    db_session.refresh(u)
+    assert "m=19456" in u.password_hash and u.password_hash != old
+    assert login(client, "old@example.com").status_code == 200
+
+
+def test_login_returns_503_when_hashing_slots_are_exhausted(client, make_user, monkeypatch):
+    import threading
+
+    from app.core import security
+
+    make_user("a@example.com")
+    monkeypatch.setattr(security, "_slots", threading.BoundedSemaphore(1))
+    monkeypatch.setattr(security, "_SLOT_TIMEOUT_SECONDS", 0.05)
+    security._slots.acquire()  # همه‌ی اسلات‌ها مشغول
+    try:
+        r = login(client, "a@example.com")
+        assert r.status_code == 503 and r.headers["retry-after"] == "5"
+        r = client.post("/api/v1/auth/register", json={"email": "n@example.com", "password": "password123"})
+        assert r.status_code == 503
+    finally:
+        security._slots.release()
+    assert login(client, "a@example.com").status_code == 200
