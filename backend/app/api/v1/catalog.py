@@ -1,9 +1,10 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import false, func, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.text import like_contains, search_key
 from app.db.session import get_db
 from app.models.catalog import Book, Category
 from app.models.enums import BookType
@@ -17,10 +18,6 @@ def book_to_out(book: Book) -> BookOut:
     out.in_stock = book.book_type in (BookType.physical, BookType.both) and book.stock_quantity > 0
     out.has_digital = book.book_type in (BookType.digital, BookType.both) and bool(book.digital_file_path)
     return out
-
-
-def _escape_like(s: str) -> str:
-    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 @router.get("/categories", response_model=list[CategoryOut])
@@ -40,10 +37,9 @@ def list_books(
 ) -> BookPage:
     stmt = select(Book).where(Book.is_published.is_(True))
     if q:
-        like = f"%{_escape_like(q.strip().lower())}%"
-        stmt = stmt.where(
-            or_(func.lower(Book.title).like(like, escape="\\"), func.lower(Book.author).like(like, escape="\\"))
-        )
+        key = search_key(q)
+        # جستجویی که بعد از یکسان‌سازی خالی می‌شود (مثلاً فقط «%») نتیجه‌ای ندارد
+        stmt = stmt.where(Book.search_text.like(like_contains(key), escape="\\") if key else false())
     if category:
         stmt = stmt.join(Category).where(Category.slug == category)
     if book_type:

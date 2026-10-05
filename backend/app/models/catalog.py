@@ -1,9 +1,10 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, Numeric, String, Text, event, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.text import search_key
 from app.db.base import Base
 from app.models.enums import BookType
 
@@ -25,6 +26,8 @@ class Book(Base):
     title: Mapped[str] = mapped_column(String(255), index=True)
     slug: Mapped[str] = mapped_column(String(280), unique=True, index=True)
     author: Mapped[str] = mapped_column(String(160), index=True)
+    # کلید جستجوی یکسان‌شده‌ی عنوان + نویسنده؛ با event پایین خودکار پر می‌شود
+    search_text: Mapped[str] = mapped_column(String(500), default="", server_default="")
     publisher: Mapped[str | None] = mapped_column(String(160))
     isbn: Mapped[str | None] = mapped_column(String(20), unique=True)
     description: Mapped[str] = mapped_column(Text, default="")
@@ -44,3 +47,9 @@ class Book(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     category: Mapped[Category | None] = relationship(back_populates="books")
+
+
+@event.listens_for(Book, "before_insert")
+@event.listens_for(Book, "before_update")
+def _sync_search_text(mapper, connection, target: Book) -> None:
+    target.search_text = search_key(f"{target.title or ''} {target.author or ''}")
