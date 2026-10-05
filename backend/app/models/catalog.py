@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Numeric, String, Text, event, func
+from sqlalchemy import CheckConstraint, Date, DateTime, Enum, ForeignKey, Numeric, String, Text, event, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.text import search_key
@@ -21,6 +21,10 @@ class Category(Base):
 
 class Book(Base):
     __tablename__ = "books"
+    __table_args__ = (
+        CheckConstraint("stock_quantity >= 0", name="ck_books_stock_nonnegative"),
+        CheckConstraint("price >= 0", name="ck_books_price_nonnegative"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255), index=True)
@@ -35,8 +39,8 @@ class Book(Base):
     published_date: Mapped[date | None] = mapped_column(Date)
 
     book_type: Mapped[BookType] = mapped_column(Enum(BookType, name="book_type"))
-    # قیمت به تومان/ریال به‌صورت عدد صحیح‌مانند؛ Numeric برای جلوگیری از خطای اعشار
-    price: Mapped[Decimal] = mapped_column(Numeric(12, 0))
+    # قیمت به «ریال» (واحد درگاه‌های پرداخت ایرانی). نمایش به کاربر همیشه به تومان (÷۱۰) است.
+    price: Mapped[Decimal] = mapped_column(Numeric(14, 0))
     # فقط برای نسخه فیزیکی معنا دارد
     stock_quantity: Mapped[int] = mapped_column(default=0)
     # مسیر داخلی فایل روی دیسک سرور؛ هرگز به کلاینت برگردانده نمی‌شود
