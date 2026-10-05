@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # توکن ادمین عمداً کوتاه‌عمرتر است
     customer_token_minutes: int = 60 * 24
     admin_token_minutes: int = 15
+    # کوکی نشست مشتری در فروشگاه (HttpOnly). روی HTTP ساده (فقط توسعه) می‌شود false کرد.
+    cookie_secure: bool = True
     # حداکثر تعداد هش رمز همزمان (هر هش ~۱۹MB حافظه)
     password_hash_concurrency: int = 4
 
