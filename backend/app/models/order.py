@@ -85,3 +85,4 @@ class OrderItem(Base):
     unit_price: Mapped[Decimal] = mapped_column(Money)
 
     order: Mapped[Order] = relationship(back_populates="items")
+    book: Mapped["Book"] = relationship()  # noqa: F821

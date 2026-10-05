@@ -35,6 +35,14 @@ class Settings(BaseSettings):
     # حداکثر تعداد هش رمز همزمان (هر هش ~۱۹MB حافظه)
     password_hash_concurrency: int = 4
 
+    # فروش و پرداخت دستی (کارت‌به‌کارت) تا وقتی درگاه اضافه شود. همه‌ی مبالغ به ریال.
+    shipping_fee_rial: int = 0
+    payment_card_number: str = ""
+    payment_card_holder: str = ""
+    order_payment_hours: int = 48  # مهلت پرداخت؛ بعد از آن سفارش لغو و موجودی آزاد می‌شود
+    max_item_quantity: int = 10
+    max_downloads_per_book: int = 10
+
     # آپلودها: covers/ عمومی (از /media/covers سرو می‌شود)، digital/ هرگز عمومی نیست
     upload_dir: str = "/data/uploads"
     max_cover_bytes: int = 5 * 1024 * 1024

@@ -36,3 +36,11 @@ def search_key(text: str) -> str:
 def like_contains(key: str) -> str:
     """الگوی LIKE «شامل بودن» با escape کاراکترهای ویژه."""
     return "%" + key.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+
+_DIGITS = str.maketrans({**{chr(0x06F0 + i): str(i) for i in range(10)}, **{chr(0x0660 + i): str(i) for i in range(10)}})
+
+
+def ascii_digits(text: str) -> str:
+    """۰۹۱۲ → 0912 (برای موبایل، شماره پیگیری، کد پستی)."""
+    return text.translate(_DIGITS)
