@@ -1,7 +1,10 @@
 FROM python:3.12-slim
 
+# MALLOC_ARENA_MAX=2: بدون آن، glibc حافظه‌ی آزادشده‌ی هش‌های Argon2 را در arenaهای هر thread نگه
+# می‌داشت و RSS با هر موج درخواست ورود بالا می‌رفت (اندازه‌گیری‌شده: ۵۴۲→۶۷۶MB در برابر ~۲۴۰MB ثابت)
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    MALLOC_ARENA_MAX=2
 
 WORKDIR /code
 
