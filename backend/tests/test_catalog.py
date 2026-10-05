@@ -14,7 +14,8 @@ PDF = b"%PDF-1.7\n" + b"0" * 64
 
 
 def mk_book(client, h, **over):
-    body = {"title": "بوف کور", "author": "صادق هدایت", "book_type": "physical", "price": 120000, "stock_quantity": 5}
+    body = {"title": "بوف کور", "author": "صادق هدایت", "book_type": "physical", "price": 120000, "stock_quantity": 5,
+            "is_published": True}
     body.update(over)
     r = client.post(f"{A}/books", json=body, headers=h)
     assert r.status_code == 201, r.text
@@ -247,3 +248,9 @@ def test_long_duplicate_slugs_do_not_overflow(client, admin_h):
 def test_slug_without_diacritics(client, admin_h):
     b = mk_book(client, admin_h, title="کِتابِ مُقَدّس")
     assert b["slug"] == "کتاب-مقدس"
+
+
+def test_new_book_defaults_to_draft(client, admin_h):
+    r = client.post(f"{A}/books", headers=admin_h, json={"title": "t", "author": "a", "book_type": "physical", "price": 1})
+    assert r.status_code == 201 and r.json()["is_published"] is False
+    assert client.get(f"{V}/books/{r.json()['slug']}").status_code == 404

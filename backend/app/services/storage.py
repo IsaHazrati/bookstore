@@ -38,7 +38,7 @@ def digital_dir() -> Path:
     return p
 
 
-async def _save(file: UploadFile, dest_dir: Path, signatures: dict, max_bytes: int, kind: str) -> str:
+def _save(file: UploadFile, dest_dir: Path, signatures: dict, max_bytes: int, kind: str) -> str:
     ext = Path(file.filename or "").suffix.lower()
     check = signatures.get(ext)
     if check is None:
@@ -50,7 +50,8 @@ async def _save(file: UploadFile, dest_dir: Path, signatures: dict, max_bytes: i
     try:
         with dest.open("wb") as out:
             first = True
-            while chunk := await file.read(CHUNK):
+            # خواندن همگام از فایل موقت: endpoint در threadpool اجرا می‌شود و event loop قفل نمی‌شود
+            while chunk := file.file.read(CHUNK):
                 if first:
                     if not check(chunk[:16]):
                         raise HTTPException(422, f"{kind}: file content does not match its extension")
@@ -67,14 +68,14 @@ async def _save(file: UploadFile, dest_dir: Path, signatures: dict, max_bytes: i
     return name
 
 
-async def save_cover(file: UploadFile) -> str:
+def save_cover(file: UploadFile) -> str:
     """نام فایل ذخیره‌شده را برمی‌گرداند (داخل covers/)."""
-    return await _save(file, covers_dir(), _COVER_SIGNATURES, get_settings().max_cover_bytes, "cover")
+    return _save(file, covers_dir(), _COVER_SIGNATURES, get_settings().max_cover_bytes, "cover")
 
 
-async def save_digital(file: UploadFile) -> str:
+def save_digital(file: UploadFile) -> str:
     """نام فایل ذخیره‌شده را برمی‌گرداند (داخل digital/)."""
-    return await _save(file, digital_dir(), _DIGITAL_SIGNATURES, get_settings().max_digital_bytes, "digital file")
+    return _save(file, digital_dir(), _DIGITAL_SIGNATURES, get_settings().max_digital_bytes, "digital file")
 
 
 def delete_cover(name: str | None) -> None:

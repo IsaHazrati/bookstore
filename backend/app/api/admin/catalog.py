@@ -185,10 +185,12 @@ def delete_book(book_id: int, db: Session = Depends(get_db)) -> Response:
 
 
 # ---------- uploads ----------
+# endpointها عمداً def معمولی‌اند (نه async): کار دیتابیس و دیسک همگام است و FastAPI
+# آن‌ها را در threadpool اجرا می‌کند. نسخه‌ی async کل سرور را حین آپلود قفل می‌کرد.
 @router.post("/books/{book_id}/cover", response_model=AdminBookOut)
-async def upload_cover(book_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)) -> AdminBookOut:
+def upload_cover(book_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)) -> AdminBookOut:
     book = _get_book(db, book_id)
-    name = await storage.save_cover(file)
+    name = storage.save_cover(file)
     old = (book.cover_image_url or "").removeprefix(COVER_URL_PREFIX) or None
     book.cover_image_url = COVER_URL_PREFIX + name
     try:
@@ -202,13 +204,13 @@ async def upload_cover(book_id: int, file: UploadFile = File(...), db: Session =
 
 
 @router.post("/books/{book_id}/digital-file", response_model=AdminBookOut)
-async def upload_digital_file(
+def upload_digital_file(
     book_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
 ) -> AdminBookOut:
     book = _get_book(db, book_id)
     if book.book_type == BookType.physical:
         raise HTTPException(422, "physical-only book cannot have a digital file; change its type first")
-    name = await storage.save_digital(file)
+    name = storage.save_digital(file)
     old = book.digital_file_path
     book.digital_file_path = name
     try:
