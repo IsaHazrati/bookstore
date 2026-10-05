@@ -23,8 +23,9 @@ from app.models.user import User
 
 @pytest.fixture()
 def db_session():
-    url = get_settings().database_url
-    kwargs = {"poolclass": StaticPool, "connect_args": {"check_same_thread": False}} if url.startswith("sqlite") else {}
+    url = get_settings().db_url
+    sqlite = url.get_backend_name() == "sqlite"
+    kwargs = {"poolclass": StaticPool, "connect_args": {"check_same_thread": False}} if sqlite else {}
     engine = create_engine(url, **kwargs)
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)

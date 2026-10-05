@@ -31,7 +31,8 @@ class BookIn(BaseModel):
     book_type: BookType
     price: Decimal = Field(ge=0, max_digits=12, decimal_places=0)
     stock_quantity: int = Field(default=0, ge=0, le=1_000_000)
-    is_published: bool = True
+    # کتاب جدید پیش‌فرض پیش‌نویس است (مثل فرم پنل ادمین)؛ انتشار باید آگاهانه باشد
+    is_published: bool = False
     category_id: int | None = None
 
     @field_validator("title", "author")

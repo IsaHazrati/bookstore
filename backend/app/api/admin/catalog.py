@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
-from sqlalchemy import exists, func, or_, select
+from sqlalchemy import exists, false, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.slug import slugify
+from app.core.text import like_contains, search_key
 from app.db.session import get_db
 from app.models.catalog import Book, Category
 from app.models.digital_access import DigitalAccess
@@ -20,6 +21,9 @@ COVER_URL_PREFIX = "/media/covers/"
 
 # ---------- helpers ----------
 def _unique_slug(db: Session, model, base: str, exclude_id: int | None = None) -> str:
+    # slug + پسوند «-n» نباید از طول ستون بیشتر شود (قبلاً خطای ۵۰۰ می‌داد)
+    max_len = model.__table__.c.slug.type.length
+    base = base[:max_len].rstrip("-_") or "item"
     slug, n = base, 1
     while True:
         stmt = select(model.id).where(model.slug == slug)
@@ -28,7 +32,8 @@ def _unique_slug(db: Session, model, base: str, exclude_id: int | None = None) -
         if db.scalar(stmt) is None:
             return slug
         n += 1
-        slug = f"{base}-{n}"
+        suffix = f"-{n}"
+        slug = base[: max_len - len(suffix)].rstrip("-_") + suffix
 
 
 def _commit(db: Session, detail: str) -> None:
@@ -121,10 +126,8 @@ def list_books(
 ) -> AdminBookPage:
     stmt = select(Book)
     if q:
-        like = "%" + q.strip().lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-        stmt = stmt.where(
-            or_(func.lower(Book.title).like(like, escape="\\"), func.lower(Book.author).like(like, escape="\\"))
-        )
+        key = search_key(q)
+        stmt = stmt.where(Book.search_text.like(like_contains(key), escape="\\") if key else false())
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = db.scalars(
         stmt.options(joinedload(Book.category)).order_by(Book.id.desc()).offset((page - 1) * page_size).limit(page_size)
@@ -182,10 +185,12 @@ def delete_book(book_id: int, db: Session = Depends(get_db)) -> Response:
 
 
 # ---------- uploads ----------
+# endpointها عمداً def معمولی‌اند (نه async): کار دیتابیس و دیسک همگام است و FastAPI
+# آن‌ها را در threadpool اجرا می‌کند. نسخه‌ی async کل سرور را حین آپلود قفل می‌کرد.
 @router.post("/books/{book_id}/cover", response_model=AdminBookOut)
-async def upload_cover(book_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)) -> AdminBookOut:
+def upload_cover(book_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)) -> AdminBookOut:
     book = _get_book(db, book_id)
-    name = await storage.save_cover(file)
+    name = storage.save_cover(file)
     old = (book.cover_image_url or "").removeprefix(COVER_URL_PREFIX) or None
     book.cover_image_url = COVER_URL_PREFIX + name
     try:
@@ -199,13 +204,13 @@ async def upload_cover(book_id: int, file: UploadFile = File(...), db: Session =
 
 
 @router.post("/books/{book_id}/digital-file", response_model=AdminBookOut)
-async def upload_digital_file(
+def upload_digital_file(
     book_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
 ) -> AdminBookOut:
     book = _get_book(db, book_id)
     if book.book_type == BookType.physical:
         raise HTTPException(422, "physical-only book cannot have a digital file; change its type first")
-    name = await storage.save_digital(file)
+    name = storage.save_digital(file)
     old = book.digital_file_path
     book.digital_file_path = name
     try:

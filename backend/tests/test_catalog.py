@@ -14,7 +14,8 @@ PDF = b"%PDF-1.7\n" + b"0" * 64
 
 
 def mk_book(client, h, **over):
-    body = {"title": "بوف کور", "author": "صادق هدایت", "book_type": "physical", "price": 120000, "stock_quantity": 5}
+    body = {"title": "بوف کور", "author": "صادق هدایت", "book_type": "physical", "price": 120000, "stock_quantity": 5,
+            "is_published": True}
     body.update(over)
     r = client.post(f"{A}/books", json=body, headers=h)
     assert r.status_code == 201, r.text
@@ -206,3 +207,50 @@ def test_public_book_detail_and_hidden_unpublished(client, admin_h):
                json={"title": "بوف کور", "author": "a", "book_type": "physical", "price": 1, "is_published": False})
     assert client.get(f"{V}/books/{b['slug']}").status_code == 404
     assert client.get(f"{V}/books/nope").status_code == 404
+
+
+# ---------- یکسان‌سازی فارسی و slug ----------
+def test_persian_search_matches_keyboard_and_spacing_variants(client, admin_h):
+    mk_book(client, admin_h, title="علي و كتابهای خوب", author="نويسنده", isbn="1")  # با کیبورد عربی
+    mk_book(client, admin_h, title="۱۹۸۴", author="جورج اورول", isbn="2")
+    def total(q):
+        return client.get(f"{V}/books", params={"q": q}).json()["total"]
+    assert total("علی") == 1 and total("علي") == 1
+    assert total("کتاب‌های") == 1 and total("کتاب های") == 1 and total("کتابهای") == 1
+    assert total("نویسنده") == 1
+    assert total("1984") == 1 and total("۱۹۸۴") == 1
+    assert total("%") == 0 and total("___") == 0
+    # پنل ادمین هم همین جستجو را دارد
+    assert client.get(f"{A}/books", params={"q": "علی"}, headers=admin_h).json()["total"] == 1
+
+
+def test_search_text_follows_title_changes(client, admin_h):
+    b = mk_book(client, admin_h, title="قدیمی", isbn="1")
+    client.put(f"{A}/books/{b['id']}", headers=admin_h,
+               json={"title": "جدید", "author": "a", "book_type": "physical", "price": 1, "is_published": True})
+    assert client.get(f"{V}/books", params={"q": "جدید"}).json()["total"] == 1
+    assert client.get(f"{V}/books", params={"q": "قدیمی"}).json()["total"] == 0
+
+
+def test_long_duplicate_slugs_do_not_overflow(client, admin_h):
+    long_cat = "ا" * 140
+    c1 = client.post(f"{A}/categories", json={"name": "c1", "slug": long_cat}, headers=admin_h)
+    c2 = client.post(f"{A}/categories", json={"name": "c2", "slug": long_cat}, headers=admin_h)
+    assert c1.status_code == c2.status_code == 201
+    assert c2.json()["slug"].endswith("-2") and len(c2.json()["slug"]) <= 140
+    body = {"title": "t", "author": "a", "book_type": "physical", "price": 1, "slug": "b" * 280}
+    b1 = client.post(f"{A}/books", json=body, headers=admin_h)
+    b2 = client.post(f"{A}/books", json={**body, "isbn": None}, headers=admin_h)
+    assert b1.status_code == b2.status_code == 201
+    assert b2.json()["slug"].endswith("-2") and len(b2.json()["slug"]) <= 280
+
+
+def test_slug_without_diacritics(client, admin_h):
+    b = mk_book(client, admin_h, title="کِتابِ مُقَدّس")
+    assert b["slug"] == "کتاب-مقدس"
+
+
+def test_new_book_defaults_to_draft(client, admin_h):
+    r = client.post(f"{A}/books", headers=admin_h, json={"title": "t", "author": "a", "book_type": "physical", "price": 1})
+    assert r.status_code == 201 and r.json()["is_published"] is False
+    assert client.get(f"{V}/books/{r.json()['slug']}").status_code == 404

@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import get_current_user
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import PasswordHashingBusy, create_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models.enums import Role
 from app.models.user import User
@@ -12,15 +12,23 @@ from app.schemas.auth import LoginIn, RegisterIn, TokenOut, UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+_BUSY = HTTPException(
+    status.HTTP_503_SERVICE_UNAVAILABLE, "server busy, try again shortly", headers={"Retry-After": "5"}
+)
+
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(data: RegisterIn, db: Session = Depends(get_db)) -> User:
     if db.scalar(select(User).where(User.email == data.email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "email already registered")
     # ثبت‌نام عمومی همیشه مشتری می‌سازد؛ ادمین فقط با اسکریپت سرور ساخته می‌شود
+    try:
+        password_hash = hash_password(data.password)
+    except PasswordHashingBusy:
+        raise _BUSY
     user = User(
         email=data.email,
-        password_hash=hash_password(data.password),
+        password_hash=password_hash,
         full_name=data.full_name,
         role=Role.customer,
     )
@@ -36,7 +44,10 @@ def register(data: RegisterIn, db: Session = Depends(get_db)) -> User:
 @router.post("/login", response_model=TokenOut)
 def login(data: LoginIn, db: Session = Depends(get_db)) -> TokenOut:
     user = db.scalar(select(User).where(User.email == data.email))
-    ok = verify_password(data.password, user.password_hash if user else None)
+    try:
+        ok, new_hash = verify_password(data.password, user.password_hash if user else None)
+    except PasswordHashingBusy:
+        raise _BUSY
     if not (user and ok and user.is_active):
         # پیام یکسان برای ایمیل نامعتبر و رمز اشتباه
         raise HTTPException(
@@ -44,6 +55,9 @@ def login(data: LoginIn, db: Session = Depends(get_db)) -> TokenOut:
             "incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if new_hash:  # هش با پارامترهای قدیمی بود؛ بی‌صدا ارتقا می‌دهیم
+        user.password_hash = new_hash
+        db.commit()
     token, expires_in = create_access_token(user.id, user.role)
     return TokenOut(access_token=token, expires_in=expires_in)
 
