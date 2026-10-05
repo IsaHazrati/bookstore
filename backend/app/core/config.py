@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     order_payment_hours: int = 48  # مهلت پرداخت؛ بعد از آن سفارش لغو و موجودی آزاد می‌شود
     max_item_quantity: int = 10
     max_downloads_per_book: int = 10
+    download_link_minutes: int = 5
+    # true در docker-compose: nginx خودش فایل دیجیتال را از volume سرو می‌کند (X-Accel-Redirect)
+    use_x_accel: bool = False
 
     # آپلودها: covers/ عمومی (از /media/covers سرو می‌شود)، digital/ هرگز عمومی نیست
     upload_dir: str = "/data/uploads"
