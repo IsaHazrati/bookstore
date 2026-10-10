@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AddToCart from "@/components/AddToCart";
 import { NotFoundError, absolute, getBook, type Book } from "@/lib/api";
 import { TYPE_LABEL, safeJsonLd, toman } from "@/lib/format";
 
@@ -65,7 +66,7 @@ export default async function BookPage({ params }: Props) {
   const { slug } = await params;
   const book = await load(slug);
 
-  // قیمت در سایت «تومان» است؛ schema.org ارز ISO می‌خواهد، پس ریال (۱ تومان = ۱۰ ریال)
+  // قیمت در API به ریال است؛ همان ارز ISO مورد نیاز schema.org (IRR)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": ["Product", "Book"],
@@ -80,7 +81,7 @@ export default async function BookPage({ params }: Props) {
     inLanguage: "fa",
     offers: {
       "@type": "Offer",
-      price: String(Number(book.price) * 10),
+      price: String(Number(book.price)),
       priceCurrency: "IRR",
       availability: availability(book),
       url: absolute(`/books/${book.slug}`),
@@ -116,6 +117,7 @@ export default async function BookPage({ params }: Props) {
             <span className="badge">{TYPE_LABEL[book.book_type]}</span>{" "}
             <span className={`stock${stock.ok ? "" : " no"}`}>{stock.text}</span>
           </p>
+          <AddToCart book={book} />
           {book.book_type === "both" && book.has_digital && (
             <p className="muted">نسخه‌ی دیجیتال بلافاصله پس از پرداخت در حساب شما فعال می‌شود.</p>
           )}

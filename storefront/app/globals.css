@@ -41,3 +41,46 @@ button { padding:.45rem 1rem; border:0; border-radius:6px; background:var(--acce
 .desc { white-space:pre-line; }
 .stock { color:var(--ok); font-weight:600; } .stock.no { color:#b91c1c; }
 @media (max-width:640px) { .detail { grid-template-columns:1fr; } .site-header nav { order:3; width:100%; } }
+
+/* ---- سبد، فرم‌ها، حساب کاربری ---- */
+.user-nav { display:flex; gap:1rem; align-items:center; }
+.cart-link { position:relative; }
+.count { display:inline-block; min-width:1.4em; margin-inline-start:.3rem; padding:0 .35rem; border-radius:999px; background:var(--accent); color:var(--accent-fg); font-size:.75rem; text-align:center; }
+.buy { display:flex; flex-direction:column; gap:.5rem; align-items:flex-start; margin:1rem 0; }
+button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+button.link-btn { background:none; border:0; padding:0; color:var(--accent); cursor:pointer; text-decoration:underline; }
+button.link-btn.danger, .danger { color:#b91c1c; }
+button:disabled { opacity:.55; cursor:not-allowed; }
+.btn { display:inline-block; padding:.55rem 1.2rem; border-radius:6px; background:var(--accent); color:var(--accent-fg); text-align:center; }
+.btn:hover { color:var(--accent-fg); opacity:.9; }
+.notice { color:var(--ok); background:color-mix(in srgb, var(--ok) 10%, transparent); padding:.5rem .75rem; border-radius:6px; }
+.error { color:#b91c1c; background:color-mix(in srgb, #b91c1c 10%, transparent); padding:.5rem .75rem; border-radius:6px; }
+.cart-list, ul.plain { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.6rem; }
+.cart-row { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
+.cart-row p { margin:.2rem 0 0; }
+.cart-actions { display:flex; align-items:center; gap:1rem; }
+.qty { flex-direction:row; display:flex; align-items:center; gap:.4rem; }
+.summary { margin-top:1rem; max-width:480px; }
+.summary .total { font-size:1.1rem; border-top:1px solid var(--line); padding-top:.6rem; }
+.auth-form { max-width:400px; margin:2rem auto; display:flex; flex-direction:column; gap:.9rem; }
+.auth-form label, .grid-form label, .checkout > label { display:flex; flex-direction:column; gap:.25rem; font-size:.9rem; }
+input:not([type=search]):not([type=checkbox]), textarea { padding:.5rem .6rem; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--fg); font:inherit; }
+.grid-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.9rem; border:1px solid var(--line); }
+.grid-form legend { font-weight:700; padding:0 .4rem; }
+.grid-form .wide { grid-column:1 / -1; }
+.checkout { display:flex; flex-direction:column; gap:1rem; }
+.checkout .summary { max-width:none; }
+.row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+.row input { flex:1; min-width:200px; }
+.pay { border-color:var(--accent); }
+.card-number { font-size:1.25rem; font-weight:700; letter-spacing:.05em; }
+table.orders { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+table.orders th, table.orders td { padding:.6rem .75rem; text-align:start; border-bottom:1px solid var(--line); }
+.status { display:inline-block; padding:0 .6rem; border-radius:999px; font-size:.8rem; background:var(--line); }
+.s-pending_payment { background:#fef3c7; color:#92400e; }
+.s-awaiting_confirmation { background:#dbeafe; color:#1e40af; }
+.s-paid, .s-shipped { background:#e0e7ff; color:#3730a3; }
+.s-completed { background:#dcfce7; color:#166534; }
+.s-cancelled { background:#f3f4f6; color:#6b7280; }
+.library li { flex-wrap:wrap; }
+@media (max-width:640px) { table.orders { display:block; overflow-x:auto; } .user-nav { order:2; } }
