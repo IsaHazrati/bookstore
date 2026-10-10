@@ -54,7 +54,7 @@ export default function Books() {
               <td>{b.title}</td>
               <td>{b.author}</td>
               <td>{TYPE_LABEL[b.book_type]}</td>
-              <td dir="ltr">{Number(b.price).toLocaleString("fa-IR")}</td>
+              <td>{Math.round(Number(b.price) / 10).toLocaleString("fa-IR")} تومان</td>
               <td>{b.book_type === "digital" ? "—" : b.stock_quantity.toLocaleString("fa-IR")}</td>
               <td>{b.is_published ? "منتشر شده" : "پیش‌نویس"}</td>
               <td className="actions">

@@ -53,3 +53,49 @@ export interface Me {
   full_name: string;
   role: "customer" | "admin";
 }
+
+export type OrderStatus = "pending_payment" | "awaiting_confirmation" | "paid" | "shipped" | "completed" | "cancelled";
+
+export interface OrderItem {
+  book_id: number;
+  book_slug: string | null;
+  item_type: "physical" | "digital";
+  quantity: number;
+  title: string;
+  unit_price: string;
+}
+
+export interface Order {
+  id: number;
+  status: OrderStatus;
+  subtotal: string;
+  shipping_fee: string;
+  total_price: string;
+  recipient_name: string | null;
+  phone: string | null;
+  province: string | null;
+  city: string | null;
+  shipping_address: string | null;
+  postal_code: string | null;
+  customer_note: string | null;
+  payment_reference: string | null;
+  tracking_code: string | null;
+  cancel_reason: string | null;
+  admin_note: string | null;
+  user_email: string | null;
+  expires_at: string | null;
+  payment_submitted_at: string | null;
+  paid_at: string | null;
+  shipped_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  items: OrderItem[];
+}
+
+export interface OrderPage {
+  items: Order[];
+  total: number;
+  page: number;
+  page_size: number;
+}
