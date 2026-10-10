@@ -4,6 +4,7 @@
 - نوع فایل هم با پسوند و هم با magic bytes بررسی می‌شود، نه Content-Type کلاینت.
 - حجم در حین نوشتن محدود می‌شود و فایل ناقص در صورت تجاوز پاک می‌شود.
 """
+import os
 import secrets
 from pathlib import Path
 
@@ -65,6 +66,9 @@ def _save(file: UploadFile, dest_dir: Path, signatures: dict, max_bytes: int, ki
     except BaseException:
         dest.unlink(missing_ok=True)
         raise
+    # nginx (کاربر دیگر) فایل‌های دیجیتال را با X-Accel-Redirect مستقیم می‌خواند؛
+    # مجوز خواندن را صریح می‌دهیم تا به umask کانتینر وابسته نباشد. نام تصادفی فایل‌ها قابل حدس نیست.
+    os.chmod(dest, 0o644)
     return name
 
 

@@ -32,3 +32,12 @@ th, td { padding:.6rem .75rem; text-align:start; border-bottom:1px solid var(--l
 .cover { display:block; max-width:140px; max-height:200px; border:1px solid var(--line); border-radius:6px; margin-bottom:.5rem; }
 .pager { justify-content:center; }
 @media (max-width:640px) { table { display:block; overflow-x:auto; } }
+
+.badge { display:inline-block; min-width:1.4em; margin-inline-start:.35rem; padding:0 .35rem; border-radius:999px; background:var(--danger); color:#fff; font-size:.75rem; }
+.status { display:inline-block; padding:0 .6rem; border-radius:999px; font-size:.8rem; background:var(--line); vertical-align:middle; }
+.s-pending_payment { background:#fef3c7; color:#92400e; }
+.s-awaiting_confirmation { background:#dbeafe; color:#1e40af; }
+.s-paid, .s-shipped { background:#e0e7ff; color:#3730a3; }
+.s-completed { background:#dcfce7; color:#166534; }
+.s-cancelled { background:#f3f4f6; color:#6b7280; }
+.row select { padding:.5rem .6rem; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); }

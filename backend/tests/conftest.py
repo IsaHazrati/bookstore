@@ -3,6 +3,8 @@ import tempfile
 
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("UPLOAD_DIR", tempfile.mkdtemp(prefix="bookstore-test-uploads-"))
+# TestClient روی http است؛ کوکی Secure را نمی‌فرستد
+os.environ.setdefault("COOKIE_SECURE", "false")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-at-least-32-bytes-long!!")
 
 import pytest
@@ -57,8 +59,11 @@ def make_user(db_session):
     return _make
 
 
-def login(client, email, password="password123"):
+def login(client, email, password="password123", keep_cookie=False):
+    """ورود. پیش‌فرض کوکی نشست را پاک می‌کند تا تست‌های مبتنی بر Bearer بدون حالت بمانند."""
     r = client.post("/api/v1/auth/login", json={"email": email, "password": password})
+    if not keep_cookie:
+        client.cookies.clear()
     return r
 
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import HeaderNav from "@/components/HeaderNav";
 import { SITE_URL } from "@/lib/api";
 import "./globals.css";
 
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <input type="search" name="q" placeholder="جستجو..." maxLength={100} aria-label="جستجو" />
               <button>جستجو</button>
             </form>
+            <HeaderNav />
           </div>
         </header>
         <main className="wrap">{children}</main>

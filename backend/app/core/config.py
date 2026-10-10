@@ -30,8 +30,21 @@ class Settings(BaseSettings):
     # توکن ادمین عمداً کوتاه‌عمرتر است
     customer_token_minutes: int = 60 * 24
     admin_token_minutes: int = 15
+    # کوکی نشست مشتری در فروشگاه (HttpOnly). روی HTTP ساده (فقط توسعه) می‌شود false کرد.
+    cookie_secure: bool = True
     # حداکثر تعداد هش رمز همزمان (هر هش ~۱۹MB حافظه)
     password_hash_concurrency: int = 4
+
+    # فروش و پرداخت دستی (کارت‌به‌کارت) تا وقتی درگاه اضافه شود. همه‌ی مبالغ به ریال.
+    shipping_fee_rial: int = 0
+    payment_card_number: str = ""
+    payment_card_holder: str = ""
+    order_payment_hours: int = 48  # مهلت پرداخت؛ بعد از آن سفارش لغو و موجودی آزاد می‌شود
+    max_item_quantity: int = 10
+    max_downloads_per_book: int = 10
+    download_link_minutes: int = 5
+    # true در docker-compose: nginx خودش فایل دیجیتال را از volume سرو می‌کند (X-Accel-Redirect)
+    use_x_accel: bool = False
 
     # آپلودها: covers/ عمومی (از /media/covers سرو می‌شود)، digital/ هرگز عمومی نیست
     upload_dir: str = "/data/uploads"

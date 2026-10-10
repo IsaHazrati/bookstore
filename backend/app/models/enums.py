@@ -13,10 +13,21 @@ class BookType(str, enum.Enum):
 
 
 class OrderStatus(str, enum.Enum):
-    pending = "pending"
+    """چرخه‌ی سفارش با پرداخت دستی (کارت‌به‌کارت) تا وقتی درگاه اضافه شود.
+
+    pending_payment ─(مشتری شماره پیگیری را ثبت می‌کند)→ awaiting_confirmation
+        ─(ادمین تأیید می‌کند)→ paid ─(ارسال)→ shipped ─→ completed
+    سفارش صرفاً دیجیتال بعد از تأیید مستقیم completed می‌شود.
+    قبل از ارسال، لغو (cancelled) ممکن است و موجودی برمی‌گردد.
+    در دیتابیس به‌صورت رشته + CHECK ذخیره می‌شود (نه enum خود PostgreSQL) تا اضافه کردن
+    وضعیت جدید فقط یک تغییر ساده‌ی constraint باشد.
+    """
+
+    pending_payment = "pending_payment"
+    awaiting_confirmation = "awaiting_confirmation"
     paid = "paid"
     shipped = "shipped"
-    delivered = "delivered"
+    completed = "completed"
     cancelled = "cancelled"
 
 

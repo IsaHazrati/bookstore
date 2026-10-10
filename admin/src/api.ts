@@ -1,4 +1,4 @@
-import type { Book, BookInput, BookPage, Category, Me } from "./types";
+import type { Book, BookInput, BookPage, Category, Me, Order, OrderPage, OrderStatus } from "./types";
 
 const TOKEN_KEY = "admin_token";
 let token: string | null = null;
@@ -111,4 +111,20 @@ export const api = {
     return request<Book>("POST", `${A}/books/${id}/digital-file`, undefined, f);
   },
   removeDigital: (id: number) => request<Book>("DELETE", `${A}/books/${id}/digital-file`),
+
+  orderSummary: () => request<{ awaiting_confirmation: number; to_ship: number }>("GET", `${A}/orders/summary`),
+  orders: (page: number, status: OrderStatus | "", q: string) => {
+    const p = new URLSearchParams({ page: String(page), page_size: "20" });
+    if (status) p.set("status", status);
+    if (q) p.set("q", q);
+    return request<OrderPage>("GET", `${A}/orders?${p}`);
+  },
+  order: (id: number) => request<Order>("GET", `${A}/orders/${id}`),
+  confirmPayment: (id: number) => request<Order>("POST", `${A}/orders/${id}/confirm-payment`),
+  rejectPayment: (id: number, reason: string) => request<Order>("POST", `${A}/orders/${id}/reject-payment`, { reason }),
+  shipOrder: (id: number, tracking_code: string) => request<Order>("POST", `${A}/orders/${id}/ship`, { tracking_code: tracking_code || null }),
+  completeOrder: (id: number) => request<Order>("POST", `${A}/orders/${id}/complete`),
+  cancelOrder: (id: number, reason: string) => request<Order>("POST", `${A}/orders/${id}/cancel`, { reason }),
+  patchOrder: (id: number, patch: Partial<Pick<Order, "postal_code" | "admin_note" | "tracking_code">>) =>
+    request<Order>("PATCH", `${A}/orders/${id}`, patch),
 };

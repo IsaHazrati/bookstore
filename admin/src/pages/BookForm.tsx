@@ -9,10 +9,11 @@ const EMPTY: BookInput = {
   published_date: null, book_type: "physical", price: 0, stock_quantity: 0, is_published: false, category_id: null,
 };
 
+// فیلد price در فرم به «تومان» است؛ API قیمت را به «ریال» می‌گیرد و برمی‌گرداند (×۱۰).
 function toInput(b: Book): BookInput {
   return {
     title: b.title, slug: b.slug, author: b.author, publisher: b.publisher, isbn: b.isbn, description: b.description,
-    published_date: b.published_date, book_type: b.book_type, price: Number(b.price), stock_quantity: b.stock_quantity,
+    published_date: b.published_date, book_type: b.book_type, price: Math.round(Number(b.price) / 10), stock_quantity: b.stock_quantity,
     is_published: b.is_published, category_id: b.category_id,
   };
 }
@@ -53,7 +54,7 @@ export default function BookForm({ id, onClose }: { id: number | null; onClose: 
   function save(e: FormEvent) {
     e.preventDefault();
     void guard(async () => {
-      const payload: BookInput = { ...form, slug: form.slug?.trim() || null, stock_quantity: hasPhysical ? form.stock_quantity : 0 };
+      const payload: BookInput = { ...form, price: form.price * 10, slug: form.slug?.trim() || null, stock_quantity: hasPhysical ? form.stock_quantity : 0 };
       const saved = bookId === null ? await api.createBook(payload) : await api.updateBook(bookId, payload);
       setBook(saved);
       setForm(toInput(saved));
