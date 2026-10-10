@@ -254,3 +254,12 @@ def test_new_book_defaults_to_draft(client, admin_h):
     r = client.post(f"{A}/books", headers=admin_h, json={"title": "t", "author": "a", "book_type": "physical", "price": 1})
     assert r.status_code == 201 and r.json()["is_published"] is False
     assert client.get(f"{V}/books/{r.json()['slug']}").status_code == 404
+
+
+def test_uploaded_files_are_readable_by_nginx(client, admin_h):
+    import stat
+
+    b = mk_book(client, admin_h, book_type="both", is_published=False)
+    client.post(f"{A}/books/{b['id']}/digital-file", headers=admin_h, files={"file": ("a.pdf", PDF)})
+    f = next(Path(get_settings().upload_dir, "digital").iterdir())
+    assert stat.S_IMODE(f.stat().st_mode) == 0o644
